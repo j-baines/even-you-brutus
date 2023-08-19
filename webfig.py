@@ -218,10 +218,10 @@ class WebFig(object):
                 f"http://{self.host}:{self.port}{self.endpoint}",
                 headers={
                     'Host': f"{self.host}:{self.port}",
-                    'Content-Type': content_type,
+                    'Content-Type': content_type
                 },
                 data=packed,
-                timeout=timeout,
+                timeout=timeout
             )
         except requests.Timeout:
             return 'timeout'
