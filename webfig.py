@@ -90,8 +90,9 @@ class Tracker(object):
 
 
 class WebFig(object):
-    def __init__(self, host, username, password):
+    def __init__(self, host, port, username, password):
         self.host = host
+        self.port = port
         self.endpoint = '/jsproxy'
 
         self.tracker = Tracker()
@@ -102,7 +103,7 @@ class WebFig(object):
 
     def handshake(self, username, password):
         # Try to fingerprint version.
-        r = requests.post(f'http://{self.host}{self.endpoint}')
+        r = requests.post(f'http://{self.host}:{self.port}{self.endpoint}')
         resp = web_decode(r.content)
 
         if len(resp) == 24:
@@ -111,13 +112,13 @@ class WebFig(object):
             self.handshake_v2()
             self.login(username, password)
         else:
-            raise Exception(f"Unknown handshake type.")
+            raise Exception("Unknown handshake type.")
 
     def handshake_v1(self, username, password):
         username = username.encode('ascii')
         password = password.encode('ascii')
 
-        r = requests.post(f'http://{self.host}{self.endpoint}').content
+        r = requests.post(f'http://{self.host}:{self.port}{self.endpoint}').content
         resp = web_decode(r)
 
         self.tracker.id = int.from_bytes(resp[:4], 'big')
@@ -148,7 +149,7 @@ class WebFig(object):
         msg = b'\x00\x00' + lchal + (b'\x00' * 8) + response
         out = rchal + msg + username
 
-        r = requests.post(f'http://{self.host}{self.endpoint}', data=web_encode(
+        r = requests.post(f'http://{self.host}:{self.port}{self.endpoint}', data=web_encode(
             self.tracker.id.to_bytes(4, 'big')
             + (0).to_bytes(4, 'big')
             + out
@@ -177,7 +178,9 @@ class WebFig(object):
     def get_server_key(self, public: bytes):
         packed = web_encode((b'\x00' * 8) + public)
 
-        r = requests.post(url = "http://" + self.host + self.endpoint, data=packed)
+        r = requests.post(
+            url=f"http://{self.host}:{self.port}{self.endpoint}", data=packed
+        )
         resp = web_decode(r.content)
 
         s_id = int.from_bytes(resp[:4], 'big')
@@ -212,13 +215,13 @@ class WebFig(object):
         r = None
         try:
             r = requests.post(
-                "http://" + self.host + self.endpoint,
+                f"http://{self.host}:{self.port}{self.endpoint}",
                 headers={
-                    'Host': self.host,
-                    'Content-Type': content_type
+                    'Host': f"{self.host}:{self.port}",
+                    'Content-Type': content_type,
                 },
                 data=packed,
-                timeout=timeout
+                timeout=timeout,
             )
         except requests.Timeout:
             return 'timeout'
