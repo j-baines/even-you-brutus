@@ -19,7 +19,7 @@ if __name__=='__main__':
 
 			try:
 				password = password.strip()
-				w = WebFig(args.rhost, args.username, password)
+				w = WebFig(args.rhost, args.rport, args.username, password)
 				print(f"\nSuccess! Valid credentials:\n{args.username}:{password}")
 				sys.exit(0)
 			except ValueError as e:
